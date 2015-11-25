@@ -30,8 +30,8 @@ class User extends AppModel {
 		),
 		'mail' =>array(
 			array(
-			'rule'=>'alphaNumeric',
-			'message'=>'半角英数字で入力してください'
+			'rule'=>'email',
+			'message'=>'正しくないメールアドレスです。'
 			),
 			array(
 			'rule'=>'isUnique',
