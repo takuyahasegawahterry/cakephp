@@ -41,8 +41,10 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 		
 
 		<?php print(
-        		$this->Form->create('Post').
+        		$this->Form->create(null,array(
+				'url' => array('controller' => 'posts','action'=>'search').
 			$this->Form->input('title').
+			$this->Form->input('著者名').
 			$this->Form->end('検索')
 		);
 		?>
