@@ -29,6 +29,12 @@ class UsersController extends AppController {
 		$this->Auth->logout();
 		$this->redirect('login');
 	}
+	
+	public function mypage(){
+		$id = $this->request->params['id'];
+		$this->log($id,'debug');
+		$this->set('id',$id);
+	}
 }
 
 
