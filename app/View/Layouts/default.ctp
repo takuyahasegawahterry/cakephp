@@ -49,7 +49,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 			
 
 		<?php if($auth->loggedIn()){
-			echo $this->Html->link($auth->user()['username'],'users/mypage/'.$auth->user()['id']);
+			echo $this->Html->link($auth->user()['username'],'/users/mypage/'.$auth->user()['id']);
 		}else{
 			echo $this->Html->link('login','/users/login');
 			echo $this->Html->link('register','/users/register');
