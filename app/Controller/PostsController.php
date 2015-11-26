@@ -6,14 +6,10 @@ class PostsController extends AppController {
 	public function index(){
 		$this->set('posts',$this->Post->find('all'));
 		
-
 	}
 
 	public function search(){
 		App::uses('Xml','Utility');
-		$id = $this->request->data['Post']['title'];
-		$this->log($this->request->data,'debug');
-		$this->log($this->request->data['Post']['title'],'debug');
 		$url = 'https://app.rakuten.co.jp/services/api/BooksBook/Search/20130522?';
 		$data = array(
 			'applicationId' => '1020646643727437143',
@@ -21,12 +17,59 @@ class PostsController extends AppController {
 			'title' =>$this->request->data['Post']['title']
 		);
 		$query = http_build_query($data);
-		//$this->log($query,'debug');
 		$url = $url.$query;
-		//$this->log($url,'debug');
-		$response = Xml::toArray(Xml::build($url));
-		//$this->log($response,'debug');
-		$this->set('response',$response);
+		$response = file_get_contents($url);
+		
+		$parser = xml_parser_create('UTF-8');
+		xml_parse_into_struct($parser,$response,$results);
+		xml_parser_free($parser);
+		
+		if($results){
+			$item_temp = null;
+			foreach ($results as $data){
+				if(isset($data['tag'])){
+					switch($data['tag']){
+						case'STATUS':
+							if(isset($data['value'])){
+								$status = $data['value'];
+							}
+							break;
+						case'STATUSMSG':
+							if(isset($data['value'])){
+								$statusmsg = $data['value'];
+							}
+							break;
+						case 'COUNT':                           
+                        				if(isset($data['value'])){
+                           					 $count  = $data['value'];
+                     					}
+                        				break;
+                    				case 'ITEM':                            
+                        				if($data['type'] == 'open'){
+                            					$item_temp = array();
+                        				}else if($data['type'] == 'close'){ 
+                            					array_push($item_array,$item_temp);
+                            					$item_temp = null;
+                        				}
+                        				break;
+                    				default:
+                        			if(is_array($item_temp)){           
+                            				if(isset($data['value'])){
+                                				$item_temp[$data['tag']] = $data['value'];
+                            				}
+                        			}
+                        			break;
+                			}
+			}	
+		}					
+	}
+
+
+
+
+
+
+		$this->set('results',$results);
 		
 		
 	}
