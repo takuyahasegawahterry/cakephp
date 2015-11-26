@@ -42,7 +42,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 
 		<?php print(
         		$this->Form->create('Post',array('action'=>'search')).
-			$this->Form->input('title or author').
+			$this->Form->input('title').
 			$this->Form->end('検索')
 		);
 		?>
