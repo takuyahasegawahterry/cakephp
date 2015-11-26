@@ -18,7 +18,7 @@ class PostsController extends AppController {
 		$data = array(
 			'applicationId' => '1020646643727437143',
 			'format' => 'xml',
-			'title' => $request['Post']['title']
+			'title' =>$this->request->data['Post']['title']
 		);
 		$query = http_build_query($data);
 		//$this->log($query,'debug');
