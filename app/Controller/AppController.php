@@ -52,7 +52,7 @@ class AppController extends Controller {
         public $paginate = array('limit' => 1000);
 
         public function beforeFilter() {
-                $this->Auth->allow('index','register','login');
+                $this->Auth->allow('index','register','login','search');
                 $this->set('auth',$this->Auth);
         }
 }
