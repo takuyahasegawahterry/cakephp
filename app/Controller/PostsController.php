@@ -19,11 +19,15 @@ class PostsController extends AppController {
 		$query = http_build_query($data);
 		$url = $url.$query;
 		$response = file_get_contents($url);
-		
 		$parser = xml_parser_create('UTF-8');
-		xml_parse_into_struct($parser,$response,$results);
+		//$test=Xml::toArray($response);
+		//$this->set('test',$test);
+		xml_parse_into_struct($parser,$response,$results,$index);
 		xml_parser_free($parser);
-		
+		$this->set('response',$results);
+
+
+		$item_array = array();
 		if($results){
 			$item_temp = null;
 			foreach ($results as $data){
@@ -47,7 +51,7 @@ class PostsController extends AppController {
                     				case 'ITEM':                            
                         				if($data['type'] == 'open'){
                             					$item_temp = array();
-                        				}else if($data['type'] == 'close'){ 
+                        				}else if($data['type'] == 'close'){
                             					array_push($item_array,$item_temp);
                             					$item_temp = null;
                         				}
@@ -61,15 +65,12 @@ class PostsController extends AppController {
                         			break;
                 			}
 			}	
-		}					
+		
+		}	
+
+
 	}
-
-
-
-
-
-
-		$this->set('results',$results);
+	$this->set('items',$item_array);
 		
 		
 	}
