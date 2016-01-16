@@ -31,35 +31,121 @@ App::uses('Controller', 'Controller');
  * @link		http://book.cakephp.org/2.0/en/controllers.html#the-app-controller
  */
 class AppController extends Controller {
-	
-      public $components = array('Session','Auth' => array(
-                'loginRedirect' => array(
-                        'controller' => 'posts',
-                        'action' => 'index'
-                ),
-                'logoutRedirect' => array(
-                        'controller' => 'pages',
-                        'action' => 'display',
-                        'home'
-                ),
-                'authenticate' => array(
-                        'Form' => array(
-                                'passwordHasher' => 'Blowfish'
-                        )
-                )
-        ),
-        'RequestHandler');
-        public $paginate = array('limit' => 1000);
+	public $components = array(
+		'Session' => array(),
+		'Auth' => array(
+			'loginAction' => array(
+				'controller' => 'users',
+				'action' => 'login'
+			),
+			'loginRedirect' => array(
+				'controller' => 'posts',
+				'action' => 'index'
+			),
+			'logoutRedirect' => array(
+				'controller' => 'pages',
+				'action' => 'display',
+				'home'
+			),
+			'authenticate' => array(
+				'Form' => array(
+					'userModel' => 'User',
+					'fields' => array('username' =>'email',
+						'password'=>'password'),
+					'passwordHasher' => 'Blowfish'
+				)
+			)
+			),
+		'RequestHandler');
+        
+	public $paginate = array('limit' => 1000);
 
         public function beforeFilter() {
-                $this->Auth->allow('index','register','login','search');
+	       $this->Auth->allow('index','searchbooksPage','allbooks','allreviews','mypage','books','reviews','register','login','author','searchbooks','view');
                 $this->set('auth',$this->Auth);
         }
+	public function search($data){
+		App::uses('Xml','Utility');
+		$url = 'https://app.rakuten.co.jp/services/api/BooksBook/Search/20130522?';
+		$query = http_build_query($data);
+		$url = $url.$query;
+		$response = file_get_contents($url);
+		$parser = xml_parser_create('UTF-8');
+		xml_parse_into_struct($parser,$response,$results,$index);
+		xml_parser_free($parser);
+
+		$item_array = array();
+		if($results){
+			$item_temp = null;
+			foreach ($results as $data){
+				if(isset($data['tag'])){
+					switch($data['tag']){
+						case'STATUS':
+							if(isset($data['value'])){
+								$status = $data['value'];
+							}
+							break;
+						case'FIRST':
+							if(isset($data['value'])){
+								$first = $data['value'];
+							}
+							break;
+						case'HITS':
+							if(isset($data['value'])){
+								$hits = $data['value'];
+							}
+							break;
+						case'STATUSMSG':
+							if(isset($data['value'])){
+								$statusmsg = $data['value'];
+							}
+							break;
+						case 'COUNT':
+                        				if(isset($data['value'])){
+                           					 $count  = $data['value'];
+                     					}
+                        				break;
+                    				case 'PAGE':
+							if(isset($data['value'])){
+								$page = $data['value'];
+							}
+							break;
+						case 'ITEM':
+                        				if($data['type'] == 'open'){
+                            					$item_temp = array();
+                        				}else if($data['type'] == 'close'){
+                            					array_push($item_array,$item_temp);
+                            					$item_temp = null;
+                        				}
+                        				break;
+                    				default:
+                        				if(is_array($item_temp)){
+                            					if(isset($data['value'])){
+                                					$item_temp[$data['tag']] = $data['value'];
+                            					}
+                        				}
+                        			break;
+                			}
+				}
+
+			}
+
+		}
+		if(empty($count)){
+			$this->Session->setFlash("一件もヒットしませんでした");
+			$this->redirect('/posts/index');
+		}
+		$item_array['count'] = $count;
+		$item_array['page'] = $page;
+		$item_array['first'] = $first;
+		$item_array['hits'] = $hits;
+		if(empty($item_array)){
+			$this->redirect('/posts/index');
+			$this->Session->setFlash("一件もヒットしませんでした");
+		}
+		return $item_array;
+	}
+
 }
-
-
-
-
-
 
 

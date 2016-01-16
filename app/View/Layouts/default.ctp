@@ -22,7 +22,6 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 <head>
 	<?php echo $this->Html->charset(); ?>
 	<title>
-		<?php echo $cakeDescription ?>:
 		<?php echo $this->fetch('title'); ?>
 	</title>
 	<?php
@@ -39,10 +38,11 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 	<div id="container">
 		<div id="header">
 		
-
+		<?php echo $this->Html->link("トップ",'/posts/index');?>
 		<?php print(
-        		$this->Form->create('Post',array('action'=>'search')).
-			$this->Form->input('title').
+        		$this->Form->create('Book',array('action'=>'searchbooks')).
+			$this->Form->input('title',array('label'=>'タイトルを入力してください')).
+			$this->Form->input('author',array('label'=>'著者名を入力してください')).
 			$this->Form->end('検索')
 		);
 		?>
@@ -50,6 +50,7 @@ $cakeVersion = __d('cake_dev', 'CakePHP %s', Configure::version())
 
 		<?php if($auth->loggedIn()){
 			echo $this->Html->link($auth->user()['username'],'/users/mypage/'.$auth->user()['id']);
+			echo $this->Html->link('logout','/users/logout');
 		}else{
 			echo $this->Html->link('login','/users/login');
 			echo $this->Html->link('register','/users/register');

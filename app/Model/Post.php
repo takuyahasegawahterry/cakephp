@@ -1,7 +1,10 @@
 <?php
 class Post extends AppModel{
-	public $hasMany = 'Review';
 
-	public $belongsTo = 'User';
-
+	public $hasMany = array(
+                'Review' => array(
+    	            'className' => 'Review',
+                    'foreignKey' => 'post_id'
+                )
+        );
 }

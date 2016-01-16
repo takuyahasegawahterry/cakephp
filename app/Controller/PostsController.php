@@ -1,77 +1,91 @@
 <?php 
 class PostsController extends AppController {
+	public $components = array('Session','Paginator');
 	public $helpers = array('Html','Form');
-	public $uses = array('Post','User','Review');
-
+	public $uses = array('Post','User','Register','Review');
+	
 	public function index(){
-		$this->set('posts',$this->Post->find('all'));
-		
-	}
-
-	public function search(){
-		App::uses('Xml','Utility');
-		$url = 'https://app.rakuten.co.jp/services/api/BooksBook/Search/20130522?';
-		$data = array(
-			'applicationId' => '1020646643727437143',
-			'format' => 'xml',
-			'title' =>$this->request->data['Post']['title']
+		$users = $this->Review->find('all',array(
+			'limit' => 10,
+			'order' => array('id DESC')));
+		$ids = array();
+		foreach($users as $user){
+			$ids[] = $user['Review']['post_id'];
+		}
+		$posts = array();
+		for($i =0;$i < 10;$i++){
+			$posts[] = $this->Post->find('first',
+				array('conditions' => array('Post.id' => $ids[$i]))
+			);
+		}
+		$this->set('posts',$posts);
+		$this->set('users',$users);
+		//ここからレビュー
+		$reviews = $this->Review->find('all',
+			array(
+			'conditions' => array('NOT' => array('Review.body' => null)),
+			'limit' =>10,
+			'order' => array('id DESC')
+			)
 		);
-		$query = http_build_query($data);
-		$url = $url.$query;
-		$response = file_get_contents($url);
-		$parser = xml_parser_create('UTF-8');
-		//$test=Xml::toArray($response);
-		//$this->set('test',$test);
-		xml_parse_into_struct($parser,$response,$results,$index);
-		xml_parser_free($parser);
-		$this->set('response',$results);
-
-
-		$item_array = array();
-		if($results){
-			$item_temp = null;
-			foreach ($results as $data){
-				if(isset($data['tag'])){
-					switch($data['tag']){
-						case'STATUS':
-							if(isset($data['value'])){
-								$status = $data['value'];
-							}
-							break;
-						case'STATUSMSG':
-							if(isset($data['value'])){
-								$statusmsg = $data['value'];
-							}
-							break;
-						case 'COUNT':                           
-                        				if(isset($data['value'])){
-                           					 $count  = $data['value'];
-                     					}
-                        				break;
-                    				case 'ITEM':                            
-                        				if($data['type'] == 'open'){
-                            					$item_temp = array();
-                        				}else if($data['type'] == 'close'){
-                            					array_push($item_array,$item_temp);
-                            					$item_temp = null;
-                        				}
-                        				break;
-                    				default:
-                        			if(is_array($item_temp)){           
-                            				if(isset($data['value'])){
-                                				$item_temp[$data['tag']] = $data['value'];
-                            				}
-                        			}
-                        			break;
-                			}
-			}	
-		
-		}	
-
+		$tmpids = array();
+		foreach($reviews as $review){
+			$tmpids[] = $review['Review']['post_id'];
+		}
+		for($i = 0;$i < 10; $i++){
+			$tmpposts [] = $this->Post->find('first',
+				array('conditions' => array('Post.id' => $tmpids[$i]))
+			);
+		}
+		$this->set('reviews',$reviews);
+		$this->set('tmpposts',$tmpposts);
+	}
+	
+	public function view($id=null){
+	$tmpPost = $this->Post->find('first',array('conditions' => array('Post.id' => $this->request->params['id'])));
+	$this->set('tmpPost',$tmpPost);
+	$data = array(
+                        'applicationId' => '1020646643727437143',
+                        'format' => 'xml',
+                        'isbn' =>$tmpPost['Post']['isbn']
+        );
+ 	$items = parent::search($data);
+	$this->set('items',$items);
+	$tmp = $this->Review->find('all',array('conditions' => array('Review.post_id' => $tmpPost['Post']['id'],'Review.user_id' => $this->Auth->user('id'))));
+	if(!empty($tmp)){
+		$this->set('tmp',$tmp);	
+	}
+	$tmpReviews = $this->Review->find('all',array('conditions' => array('Review.post_id' => $tmpPost['Post']['id'])));
+	if(!empty($tmpReviews)){
+		$this->set('tmpReviews',$tmpReviews);
 
 	}
-	$this->set('items',$item_array);
+}	
+	
+	public function allbooks(){
+		$this->Paginator->settings = array(
+			'Review' => array(
+				'limit' => 25,
+				'order' => array(
+					'Review.id' =>  'desc')
+			)
+		);
+		$reviews = $this->Paginator->paginate('Review');
+		$ids = array();
 		
-		
-	}
+		foreach($reviews as $review){
+			$ids[] = $review['Review']['post_id'];
+		}
+		$posts = array();
+		$res = count($ids);
+		for($i=0;$i<$res;$i++){
+			$posts[] = $this->Post->find('first',
+				array('conditions' => array('Post.id' => $ids[$i])));
+			
+		}
+		$this->set('count',$res);
+		$this->set('users',$reviews);
+		$this->set('posts',$posts);	
+
+}
 }
